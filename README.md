@@ -94,6 +94,47 @@ App available at `http://localhost:3000`
 
 JWT payload contains: `sub` (user_id), `org` (organization_id), `role`.
 
+## Client Endpoints
+
+All client routes require a valid JWT in the `Authorization: Bearer <token>` header.
+Each request is scoped to the caller's organization — cross-organization access returns `404`.
+
+| Method | Route | Description |
+|--------|-------|-------------|
+| POST | `/clients` | Create a client in the caller's organization |
+| GET | `/clients` | List all clients of the caller's organization |
+| GET | `/clients/{client_id}` | Retrieve a client by ID (404 if not in org) |
+| PUT | `/clients/{client_id}` | Partial update (only sent fields are modified) |
+| DELETE | `/clients/{client_id}` | Delete a client (204 on success) |
+
+### Create / Update payload
+```json
+{
+  "name": "Dupont SARL",
+  "siren": "123456789",
+  "contact_email": "contact@dupont.fr",
+  "contact_phone": "+33123456789"
+}
+```
+
+- `name` — required, 1-255 chars
+- `siren` — optional, exactly 9 digits
+- `contact_email` — optional, valid email
+- `contact_phone` — optional, ≤32 chars
+
+### Response
+```json
+{
+  "id": "uuid",
+  "name": "Dupont SARL",
+  "siren": "123456789",
+  "contact_email": "contact@dupont.fr",
+  "contact_phone": "+33123456789",
+  "organization_id": "uuid",
+  "created_at": "2026-05-24T10:00:00Z"
+}
+```
+
 ## Data Model
 
 - **organizations** — one per accounting firm, fully isolated
@@ -104,8 +145,8 @@ JWT payload contains: `sub` (user_id), `org` (organization_id), `role`.
 ## V1 Features
 
 - [x] Authentication (register / login / JWT)
-- [ ] Organization management (multi-tenant isolation)
-- [ ] Client management
+- [x] Organization management (multi-tenant isolation)
+- [x] Client management
 - [ ] Document upload (PDF / images)
 - [ ] Dashboard
 - [ ] Document listing per client

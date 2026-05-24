@@ -16,6 +16,7 @@ class Organization(Base):
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
     users = relationship("User", back_populates="organization")
+    clients = relationship("Client", back_populates="organization", cascade="all, delete-orphan")
 
 
 class User(Base):
