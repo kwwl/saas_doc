@@ -6,10 +6,11 @@ A web application that allows accounting firms to centralize, organize, and trac
 
 | Layer | Technology |
 |-------|-----------|
-| Backend | Python 3.11+ / FastAPI |
+| Backend | Python 3.9+ / FastAPI |
 | Database | PostgreSQL + SQLAlchemy |
+| Migrations | Alembic |
 | Frontend | Next.js + Tailwind CSS |
-| Auth | JWT (python-jose + passlib) |
+| Auth | JWT (python-jose) + bcrypt |
 | File storage | Local (dev) / S3-compatible (prod) |
 
 ## Project Structure
@@ -24,9 +25,11 @@ saas_doc/
 │   │   ├── routes/         # API routers
 │   │   ├── schemas/        # Pydantic schemas
 │   │   └── services/       # Business logic
-│   ├── requirements.txt
+│   ├── tests/              # Unit tests
 │   └── .env.example
 ├── frontend/               # Next.js app (initialized separately)
+├── env/                    # Python virtual environment (not committed)
+├── requirements.txt
 └── README.md
 ```
 
@@ -35,12 +38,12 @@ saas_doc/
 ### Backend
 
 ```bash
-cd backend
-python -m venv env
+python3 -m venv env
 source env/bin/activate
 pip install -r requirements.txt
-cp .env.example .env
-# Edit .env with your database credentials
+cp backend/.env.example backend/.env
+# Edit backend/.env with your database credentials
+cd backend
 uvicorn app.main:app --reload
 ```
 
@@ -57,6 +60,40 @@ npm run dev
 
 App available at `http://localhost:3000`
 
+## Auth Endpoints
+
+| Method | Route | Description |
+|--------|-------|-------------|
+| POST | `/auth/register` | Create organization + admin user, returns JWT |
+| POST | `/auth/login` | Login with email/password, returns JWT |
+
+### Register payload
+```json
+{
+  "organization_name": "Cabinet Dupont",
+  "email": "admin@cabinet.fr",
+  "password": "securepassword"
+}
+```
+
+### Login payload
+```json
+{
+  "email": "admin@cabinet.fr",
+  "password": "securepassword"
+}
+```
+
+### Token response
+```json
+{
+  "access_token": "<JWT>",
+  "token_type": "bearer"
+}
+```
+
+JWT payload contains: `sub` (user_id), `org` (organization_id), `role`.
+
 ## Data Model
 
 - **organizations** — one per accounting firm, fully isolated
@@ -66,7 +103,7 @@ App available at `http://localhost:3000`
 
 ## V1 Features
 
-- [ ] Authentication (register / login / JWT)
+- [x] Authentication (register / login / JWT)
 - [ ] Organization management (multi-tenant isolation)
 - [ ] Client management
 - [ ] Document upload (PDF / images)
