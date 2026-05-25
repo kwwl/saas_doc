@@ -15,6 +15,7 @@ load_dotenv(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file_
 from app.core.database import Base  # noqa: E402
 import app.models.user  # noqa: F401, E402 — ensure models are registered on Base
 import app.models.client  # noqa: F401, E402
+import app.models.document  # noqa: F401, E402
 
 config = context.config
 config.set_main_option("sqlalchemy.url", os.environ["DATABASE_URL"])
