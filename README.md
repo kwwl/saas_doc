@@ -187,6 +187,47 @@ The `backend/uploads/` directory is gitignored. For production, the storage laye
 | 404 | Client/document not found in caller's organization |
 | 413 | File exceeds `MAX_UPLOAD_SIZE_MB` |
 
+## Dashboard Endpoint
+
+| Method | Route | Description |
+|--------|-------|-------------|
+| GET | `/dashboard` | Aggregated activity snapshot for the caller's organization |
+
+Requires a valid JWT. The response is fully scoped to the caller's organization — every count, sum, and recent-activity item is filtered by `organization_id` (with defense-in-depth on JOINs).
+
+### Response
+```json
+{
+  "total_clients": 12,
+  "total_documents": 87,
+  "total_storage_bytes": 145238912,
+  "recent_documents": [
+    {
+      "id": "uuid",
+      "filename": "facture-2026-05.pdf",
+      "mime_type": "application/pdf",
+      "size_bytes": 145238,
+      "client_id": "uuid",
+      "client_name": "Dupont SARL",
+      "uploaded_by_email": "admin@cabinet.fr",
+      "created_at": "2026-05-24T10:00:00Z"
+    }
+  ],
+  "recent_clients": [
+    {
+      "id": "uuid",
+      "name": "Dupont SARL",
+      "document_count": 8,
+      "created_at": "2026-05-20T09:00:00Z"
+    }
+  ]
+}
+```
+
+- `recent_documents` and `recent_clients` are capped at 5 items each, ordered by `created_at DESC`
+- `document_count` per recent client is computed via a scoped subquery (no N+1)
+- Empty organization returns zeros and empty lists
+
 ## Data Model
 
 - **organizations** — one per accounting firm, fully isolated
@@ -200,7 +241,7 @@ The `backend/uploads/` directory is gitignored. For production, the storage laye
 - [x] Organization management (multi-tenant isolation)
 - [x] Client management
 - [x] Document upload (PDF / images)
-- [ ] Dashboard
+- [x] Dashboard
 - [x] Document listing per client
 
 ## Branch Strategy
