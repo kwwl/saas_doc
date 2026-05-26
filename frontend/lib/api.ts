@@ -9,7 +9,7 @@
  *   - Provide a separate `upload` method for multipart/form-data (no
  *     Content-Type header — the browser sets the multipart boundary)
  */
-import { getToken } from "./auth";
+import { clearAuth, getToken } from "./auth";
 import type { ApiErrorDetail, ApiErrorResponse } from "./types";
 
 const API_URL =
@@ -58,6 +58,19 @@ async function request<T>(
     } catch {
       // body wasn't JSON; keep statusText
     }
+
+    // Global 401 handling: token is invalid/expired. Clear local auth and
+    // bounce to /login. Skipped for /auth/* requests so the login/register
+    // forms can surface "bad credentials" inline instead of redirecting.
+    if (
+      response.status === 401 &&
+      !path.startsWith("/auth/") &&
+      typeof window !== "undefined"
+    ) {
+      clearAuth();
+      window.location.href = "/login";
+    }
+
     throw new ApiError(response.status, detail);
   }
 

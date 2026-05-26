@@ -10,6 +10,9 @@
  */
 
 const TOKEN_KEY = "saas_doc_token";
+const EMAIL_KEY = "saas_doc_email";
+
+// --- Token ---
 
 export function getToken(): string | null {
   if (typeof window === "undefined") return null;
@@ -24,6 +27,31 @@ export function setToken(token: string): void {
 export function clearToken(): void {
   if (typeof window === "undefined") return;
   window.localStorage.removeItem(TOKEN_KEY);
+}
+
+// --- Email (not in JWT, stored separately at login/register time) ---
+
+export function getEmail(): string | null {
+  if (typeof window === "undefined") return null;
+  return window.localStorage.getItem(EMAIL_KEY);
+}
+
+export function setEmail(email: string): void {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(EMAIL_KEY, email);
+}
+
+export function clearEmail(): void {
+  if (typeof window === "undefined") return;
+  window.localStorage.removeItem(EMAIL_KEY);
+}
+
+// --- Combined ---
+
+/** Clear both token and email — used on logout or 401. */
+export function clearAuth(): void {
+  clearToken();
+  clearEmail();
 }
 
 export function isAuthenticated(): boolean {
