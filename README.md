@@ -247,12 +247,21 @@ Requires a valid JWT. The response is fully scoped to the caller's organization 
 
 ## V1 Features
 
+### Backend
 - [x] Authentication (register / login / JWT)
 - [x] Organization management (multi-tenant isolation)
 - [x] Client management
 - [x] Document upload (PDF / images)
 - [x] Dashboard
 - [x] Document listing per client
+
+### Frontend
+- [x] Public home + auth pages (`/login`, `/register`)
+- [x] JWT auth context + protected route guard + logout
+- [x] Dashboard placeholder (3 totals via `GET /dashboard`)
+- [ ] Client management UI
+- [ ] Document upload + listing UI
+- [ ] Full dashboard (recent activity lists)
 
 ## Branch Strategy
 
