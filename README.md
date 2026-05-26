@@ -9,7 +9,8 @@ A web application that allows accounting firms to centralize, organize, and trac
 | Backend | Python 3.9+ / FastAPI |
 | Database | PostgreSQL + SQLAlchemy |
 | Migrations | Alembic |
-| Frontend | Next.js + Tailwind CSS |
+| Frontend | Next.js 15 (App Router) + React 19 + TypeScript |
+| UI | Tailwind CSS v4 + shadcn/ui (Base UI primitives) |
 | Auth | JWT (python-jose) + bcrypt |
 | File storage | Local (dev) / S3-compatible (prod) |
 
@@ -27,7 +28,12 @@ saas_doc/
 │   │   └── services/       # Business logic
 │   ├── tests/              # Unit tests
 │   └── .env.example
-├── frontend/               # Next.js app (initialized separately)
+├── frontend/               # Next.js 15 app (App Router)
+│   ├── app/                # Routes, layouts, route groups (auth)/(protected)
+│   ├── components/ui/      # shadcn/ui components
+│   ├── lib/                # api client, auth helpers, types, utils
+│   └── .env.example
+
 ├── env/                    # Python virtual environment (not committed)
 ├── requirements.txt
 └── README.md
@@ -55,10 +61,14 @@ Health check: `GET /health`
 ```bash
 cd frontend
 npm install
+cp .env.example .env.local
+# Edit .env.local if your backend is not on http://localhost:8000
 npm run dev
 ```
 
-App available at `http://localhost:3000`
+App available at `http://localhost:3000`. The frontend reads `NEXT_PUBLIC_API_URL` to reach the backend.
+
+See [`frontend/README.md`](frontend/README.md) for detailed structure, conventions, and the typed API client usage.
 
 ## Auth Endpoints
 
