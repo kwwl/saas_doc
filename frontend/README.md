@@ -62,12 +62,25 @@ frontend/
 │   │   ├── login/page.tsx       # /login
 │   │   └── register/page.tsx    # /register
 │   └── (protected)/             # Route group: authenticated pages
-│       ├── layout.tsx           # Guard + header (email + logout)
-│       └── dashboard/page.tsx   # /dashboard (placeholder, 3 totals)
+│       ├── layout.tsx           # Guard + header (nav links, email, logout)
+│       ├── dashboard/page.tsx   # /dashboard (placeholder, 3 totals)
+│       └── clients/
+│           ├── page.tsx         # /clients — list (+ page.test.tsx)
+│           ├── new/
+│           │   └── page.tsx     # /clients/new — create (+ page.test.tsx)
+│           └── [id]/
+│               ├── page.tsx     # /clients/[id] — detail + delete
+│               ├── edit/page.tsx       # /clients/[id]/edit — edit
+│               └── documents/page.tsx  # /clients/[id]/documents — placeholder
 ├── components/
+│   ├── clients/
+│   │   ├── client-form.tsx      # Shared create/edit form (+ client-form.test.tsx)
+│   │   ├── client-table.tsx     # Presentational list table
+│   │   └── delete-client-dialog.tsx  # Delete confirmation (+ tests)
 │   └── ui/                      # shadcn components (editable, not vendored)
 │       ├── button.tsx
 │       ├── card.tsx
+│       ├── dialog.tsx           # Adapted from the base-nova registry (Base UI)
 │       ├── input.tsx
 │       ├── label.tsx
 │       └── sonner.tsx           # Customized: removed next-themes dependency
@@ -78,7 +91,8 @@ frontend/
 │   ├── auth-context.tsx         # AuthProvider + useAuth hook
 │   ├── auth-context.test.tsx    # Smoke tests on the auth context (5)
 │   ├── schemas/
-│   │   └── auth.ts              # Zod schemas for login + register
+│   │   ├── auth.ts              # Zod schemas for login + register
+│   │   └── client.ts            # Zod schema + payload normalization (+ tests)
 │   ├── types.ts                 # TS types mirroring backend Pydantic schemas
 │   └── utils.ts                 # cn() — Tailwind class merger
 ├── public/                      # Static assets
@@ -225,14 +239,63 @@ const {
 
 Shared schemas live in `lib/schemas/`. Inferred form value types come from `z.infer<typeof schema>`.
 
+## Clients module (V1)
+
+Full CRUD UI on top of the backend `/clients` endpoints. Multi-tenant scoping
+is enforced entirely backend-side (cross-organization access returns 404) —
+the frontend contains no business logic and renders whatever the API returns.
+
+| Route | Page | API call |
+| ----------------------- | ------------------------------------ | ------------------------ |
+| `/clients` | List (table, empty state) | `GET /clients` |
+| `/clients/new` | Create | `POST /clients` |
+| `/clients/[id]` | Detail + delete (confirmation dialog) | `GET` / `DELETE /clients/{id}` |
+| `/clients/[id]/edit` | Edit (pre-filled) | `GET` + `PUT /clients/{id}` |
+| `/clients/[id]/documents` | Placeholder for the documents feature | — |
+
+### Shared form & validation
+
+Create and edit use the same component (`components/clients/client-form.tsx`)
+and the same zod schema (`lib/schemas/client.ts`):
+
+- `name` required (1-255), `siren` optional (exactly 9 digits), `contact_email`
+  optional (valid email), `contact_phone` optional (≤ 32 chars).
+- **`"" → null` normalization**: form inputs hold strings, but the backend
+  rejects `""` for `contact_email` (Pydantic validates it as an email).
+  `toClientPayload()` trims values and converts empty strings to `null` before
+  any API call. On PUT, sending `null` explicitly clears the field.
+- `clientToFormValues()` does the reverse mapping (API `null` → form `""`)
+  to pre-fill the edit form.
+
+Pages own the API calls; components own UX state (validation, submitting,
+dialog open/close) and surface `ApiError` as French toasts.
+
+### Deletion
+
+Only reachable from the detail page (V1 choice — avoids accidental deletions
+from the list). Explicit confirmation via the shadcn/Base UI dialog; the
+dialog stays open on API failure so the user can retry.
+
+### V1 limitations
+
+- No search, sort, or pagination — `GET /clients` returns everything in API order.
+- No concurrent-edit detection — last PUT wins.
+- `/clients/[id]/documents` is a placeholder (no existence check on the client);
+  the real documents UI lands in the next feature branch.
+
 ## Tests
 
 Vitest 3 + React Testing Library + jsdom. Run with `npm test` (or `npm run test:watch`).
 
-Current coverage (smoke tests only):
+Current coverage:
 
 - **`lib/api.test.ts`** (7) — JSON parsing, Authorization header, Content-Type, 204 handling, ApiError surface, **401 redirect on protected routes**, **401 no-redirect on `/auth/*`**.
 - **`lib/auth-context.test.tsx`** (5) — initial state, localStorage load on mount, `login()` flow, `logout()` flow, corrupt JWT auto-cleanup.
+- **`lib/schemas/client.test.ts`** (17) — client schema validation (name, SIREN, email, phone) and `toClientPayload` normalization (`""`/whitespace → `null`, trim).
+- **`components/clients/client-form.test.tsx`** (7) — rendering, zod errors surfaced, normalized payload on submit, edit-mode pre-fill, `clientToFormValues` mapping.
+- **`components/clients/delete-client-dialog.test.tsx`** (4) — hidden until triggered, cancel path, explicit confirmation, dialog stays open on rejection.
+- **`app/(protected)/clients/page.test.tsx`** (3) — table rendering with detail links, empty state, API error surface (mocked `api.get`).
+- **`app/(protected)/clients/new/page.test.tsx`** (2) — happy path (POST + redirect to detail), no API call on validation failure (mocked `api.post` + `next/navigation`).
 
 Config:
 
@@ -272,9 +335,10 @@ shadcn v4 builds on `@base-ui/react` (not Radix). A few API differences vs. v3:
 
 The following come in later feature branches:
 
-- `/clients` UI (list, create, edit, delete)
-- `/documents` UI (upload, list per client, download, delete)
+- `/documents` UI (upload, list per client, download, delete — the
+  `/clients/[id]/documents` placeholder reserves the route)
 - Full dashboard (recent activity lists, currently only totals are rendered)
+- Client list search, sort, and pagination (V1 renders the full list in API order)
 - Backend `/auth/me` endpoint (V1 stores email separately instead)
 - httpOnly cookie auth + Next.js middleware route protection (V2 hardening)
 - Backend-side password min length validation (frontend enforces 8 chars; backend should mirror)

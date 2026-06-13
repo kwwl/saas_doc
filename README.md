@@ -68,8 +68,6 @@ npm run dev
 
 App available at `http://localhost:3000`. The frontend reads `NEXT_PUBLIC_API_URL` to reach the backend.
 
-See [`frontend/README.md`](frontend/README.md) for detailed structure, conventions, and the typed API client usage.
-
 ## Auth Endpoints
 
 | Method | Route | Description |
@@ -162,7 +160,7 @@ Each request is scoped to the caller's organization — cross-organization acces
 
 - **Allowed MIME types:** `application/pdf`, `image/jpeg`, `image/png`, `image/webp`
 - **Max size:** 20 MB per file (configurable via `MAX_UPLOAD_SIZE_MB`)
-- **Filename** is preserved in DB for display/download; on disk the file is stored under its document UUID (no traversal risk)
+- **Filename** is preserved in DB for display/download; on disk the file is stored under its document UUID (no path traversal risk)
 
 ### Storage layout
 
@@ -245,23 +243,18 @@ Requires a valid JWT. The response is fully scoped to the caller's organization 
 - **clients** — belong to one organization
 - **documents** — linked to a client and organization, stored securely
 
-## V1 Features
+## V1 Progress
 
-### Backend
+### Backend ✅ complet
 - [x] Authentication (register / login / JWT)
 - [x] Organization management (multi-tenant isolation)
-- [x] Client management
-- [x] Document upload (PDF / images)
-- [x] Dashboard
-- [x] Document listing per client
+- [x] Client management (CRUD complet)
+- [x] Document management (upload PDF/images, stockage local, CRUD)
+- [x] Dashboard endpoint (agrégats par organisation)
+- [x] Migrations Alembic (organizations, users, clients, documents)
 
 ### Frontend
-- [x] Public home + auth pages (`/login`, `/register`)
-- [x] JWT auth context + protected route guard + logout
-- [x] Dashboard placeholder (3 totals via `GET /dashboard`)
-- [ ] Client management UI
-- [ ] Document upload + listing UI
-- [ ] Full dashboard (recent activity lists)
+- [ ] Next.js — non démarré
 
 ## Branch Strategy
 
